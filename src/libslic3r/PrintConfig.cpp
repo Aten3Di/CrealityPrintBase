@@ -124,6 +124,12 @@ static t_config_enum_values s_keys_map_GCodeFlavorText{{"Left Upper", Left_Upper
                                                        {"Right Below", Right_Below}};
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(GCodeFlavorText)
 
+static t_config_enum_values s_keys_map_GantryTiltAxis {
+    { "X", int(GantryTiltAxis::gtaX) },
+    { "Y", int(GantryTiltAxis::gtaY) }
+};
+CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(GantryTiltAxis)
+
 
 static t_config_enum_values s_keys_map_FuzzySkinType {
     { "none",           int(FuzzySkinType::None) },
@@ -3113,6 +3119,24 @@ void PrintConfigDef::init_fff_params()
     def->enum_labels.push_back(L("Delta"));
     def->mode = comDevelop;
     def->set_default_value(new ConfigOptionEnum<PrinterStructure>(psUndefine));
+
+    def           = this->add("gantry_tilt_angle", coFloat);
+    def->label    = L("Gantry tilt angle");
+    def->tooltip  = L("Gantry/belt tilt angle in degrees. 0 means traditional planar printing.");
+    def->sidetext = L("°");
+    def->mode     = comAdvanced;
+    def->min      = 0;
+    def->max      = 89;
+    def->set_default_value(new ConfigOptionFloat(0.0));
+
+    def                = this->add("gantry_tilt_axis", coEnum);
+    def->label         = L("Gantry tilt axis");
+    def->tooltip       = L("Axis used as gantry tilt rotation reference.");
+    def->mode          = comAdvanced;
+    def->enum_keys_map = &ConfigOptionEnum<GantryTiltAxis>::get_enum_values();
+    def->enum_values.emplace_back("X");
+    def->enum_values.emplace_back("Y");
+    def->set_default_value(new ConfigOptionEnum<GantryTiltAxis>(GantryTiltAxis::gtaY));
 
     def = this->add("best_object_pos", coPoint);
     def->label = L("Best object position");

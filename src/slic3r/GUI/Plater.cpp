@@ -6679,7 +6679,7 @@ void Plater::priv::process_validation_warning(StringObjectException const& warni
  *     and to evaluate accurate belt‑space bounding boxes (see instance_belt_bounding_box).
  *   - A common configuration uses 45°, but other angles are supported.
  */
-Transform3d beltXForm2(const Transform3d& offset, float angle)
+Transform3d beltXForm2(const Transform3d& offset, float angle, GantryTiltAxis tilt_axis)
 {
     float theta = angle * PI / 180.0f;
 
@@ -6691,9 +6691,15 @@ Transform3d beltXForm2(const Transform3d& offset, float angle)
 
     Transform3d xf2 = Transform3d::Identity();
     xf2(2, 2)       = 0.0f;
-    xf2(1, 1)       = 0.0f;
-    xf2(2, 1)       = -1.0f;
-    xf2(1, 2)       = 1.0f;
+    if (tilt_axis == GantryTiltAxis::gtaY) {
+        xf2(1, 1) = 0.0f;
+        xf2(2, 1) = -1.0f;
+        xf2(1, 2) = 1.0f;
+    } else {
+        xf2(0, 0) = 0.0f;
+        xf2(2, 0) = -1.0f;
+        xf2(0, 2) = 1.0f;
+    }
 
     Vec3d                    xf3Data(0.0f, 0.0f, 0.0f);
     Geometry::Transformation _trans;
@@ -16646,6 +16652,14 @@ void Plater::update_belt_trans()
     }
     DynamicPrintConfig& proj_cfg = wxGetApp().preset_bundle->project_config;
     dynamic_cast<ConfigOptionFloat*>(proj_cfg.option("belt_Z_offset"))->value = maxY;
+    float tilt_angle_deg = std::clamp(proj_cfg.opt_float("gantry_tilt_angle"), 0.0f, 89.0f);
+    if (tilt_angle_deg <= 0.0f) {
+        this->restore_belt_trans();
+        return;
+    }
+    GantryTiltAxis tilt_axis = GantryTiltAxis::gtaY;
+    if (const auto* axis_opt = proj_cfg.option<ConfigOptionEnum<GantryTiltAxis>>("gantry_tilt_axis", false); axis_opt != nullptr)
+        tilt_axis = axis_opt->value;
 
     wxGetApp().preset_bundle->printers.update_dirty();
     
@@ -16657,7 +16671,7 @@ void Plater::update_belt_trans()
             Vec3d                          xf3Data(0.0f, 0.0f, 0.0f);
             Geometry::Transformation       trans_offset;
             trans_offset.set_offset(xf3Data);
-            Transform3d t = beltXForm2(Transform3d::Identity(), 45.0f);
+            Transform3d t = beltXForm2(Transform3d::Identity(), tilt_angle_deg, tilt_axis);
 
             // z方向的旋转缩放都有问题
             Vec3d                    zoffsetData(0, 0, 0);
@@ -16678,7 +16692,7 @@ void Plater::update_belt_trans()
             // Rotate the instance around X to locate the belt contact point and derive offset vectors.
             Vec3f contact_point_rotated = Vec3f::Zero();
             Vec3f offset_z              = Vec3f::Zero();
-            const double belt_angle_deg = 45.0;
+            const double belt_angle_deg = tilt_angle_deg;
             const double belt_angle_rad = Geometry::deg2rad(belt_angle_deg);
             const double cos_angle      = std::cos(belt_angle_rad);
             const double sin_angle      = std::sin(belt_angle_rad);
@@ -16755,7 +16769,7 @@ void Plater::update_belt_trans()
             //double inst_size_z = _object->max_z() - _object->min_z();
             double offy = inst_box.max(1) - best_world_point.y() - inst_box.min(2) + best_world_point.z();
             // Use the belt-space snug bounding box to align the instance back onto the belt plane.
-            BoundingBoxf3 belt_bbox = _object->instance_belt_bounding_box(*inst, /*dont_translate=*/true);
+            BoundingBoxf3 belt_bbox = _object->instance_belt_bounding_box(*inst, /*dont_translate=*/true, tilt_angle_deg, tilt_axis);
             // 沿皮带面法向（在皮带坐标系中对应Y轴）对齐到Y=0
             trans.set_offset(Axis::Y, -belt_bbox.min(1));
             // Z方向保持与原有逻辑一致，但使用更准确的皮带坐标系下的最小Z

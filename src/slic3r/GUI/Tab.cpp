@@ -1525,13 +1525,13 @@ void Tab::update_support_options_visibility()
             line->toggle_visible = visible;
     };
 
-    toggle_line_in_support("support_type", !is_belt_machine);
+    toggle_line_in_support("support_type", true);
 
     for (const char* key : { "raft_layers", "raft_contact_distance" })
-        toggle_line_in_support(key, !is_belt_machine);
+        toggle_line_in_support(key, true);
 
     for (const char* key : { "support_filament", "support_interface_filament", "support_interface_not_for_body" })
-        toggle_line_in_support(key, !is_belt_machine);
+        toggle_line_in_support(key, true);
 
     static const char* advanced_keys[] = {
         "raft_first_layer_density",
@@ -1557,7 +1557,7 @@ void Tab::update_support_options_visibility()
         "tree_hybrid_cross_height"
     };
     for (const char* key : advanced_keys)
-        toggle_line_in_support(key, !is_belt_machine);
+        toggle_line_in_support(key, true);
 
     toggle_line_in_support("support_base_pattern", true);
     toggle_line_in_support("support_interface_pattern", true);
@@ -1702,6 +1702,13 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
             st_i = boost::any_cast<int>(value);
         } catch (...) {
             return;
+        }
+        const bool effective_belt_mode = wxGetApp().preset_bundle->machine_is_belt() && m_config->opt_float("gantry_tilt_angle") > 0.0;
+        if (effective_belt_mode && (st_i == stTreeAuto || st_i == stTree)) {
+            DynamicPrintConfig new_conf = *m_config;
+            new_conf.set_key_value("support_type", new ConfigOptionEnum<SupportType>(stNormal));
+            load_config(new_conf);
+            st_i = stNormal;
         }
         wxCommandEvent evt(EVT_SUPPORT_TYPE_CHANGED);
         evt.SetInt(st_i);
@@ -5065,6 +5072,8 @@ void TabPrinter::build_fff()
         optgroup->append_single_option_line("machine_unload_filament_time");
         optgroup->append_single_option_line("time_cost");
         //optgroup->append_single_option_line("machine_is_belt");
+        optgroup->append_single_option_line("gantry_tilt_angle");
+        optgroup->append_single_option_line("gantry_tilt_axis");
         optgroup->append_single_option_line("flush_box_first_clean_length");
         optgroup->append_single_option_line("flush_box_need_clean_length");
         optgroup->append_single_option_line("flush_box_need_clean_length_max");

@@ -42,7 +42,9 @@ static std::vector<std::string> s_project_options {
     //"wipe_tower_rotation_angle",
     "curr_bed_type",
     "flush_multiplier",
-    "belt_Z_offset"
+    "belt_Z_offset",
+    "gantry_tilt_angle",
+    "gantry_tilt_axis"
 };
 
 //BBS: add BBL as default

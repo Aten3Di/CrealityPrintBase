@@ -7247,11 +7247,17 @@ Transform3d GLCanvas3D::get_preview_extra_transform()
     if (wxGetApp().preset_bundle->machine_is_belt()) {
         DynamicPrintConfig& proj_cfg = wxGetApp().preset_bundle->project_config;
         float               Z_offset = proj_cfg.opt_float("belt_Z_offset");
+        float               tilt_angle_deg = std::clamp(proj_cfg.opt_float("gantry_tilt_angle"), 0.0f, 89.0f);
+        if (tilt_angle_deg <= 0.0f)
+            return transform;
+        GantryTiltAxis      tilt_axis = GantryTiltAxis::gtaY;
+        if (const auto* axis_opt = proj_cfg.option<ConfigOptionEnum<GantryTiltAxis>>("gantry_tilt_axis", false); axis_opt != nullptr)
+            tilt_axis = axis_opt->value;
 
         Vec3d                    xf3Data(0.0f, -Z_offset, 0.0f);
         Geometry::Transformation trans_offset;
         trans_offset.set_offset(xf3Data);
-        transform = beltXForm(trans_offset.get_matrix(), 45.0f).inverse();
+        transform = beltXForm(trans_offset.get_matrix(), tilt_angle_deg, tilt_axis).inverse();
     }
     return transform;
 }

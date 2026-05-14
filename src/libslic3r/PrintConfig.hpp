@@ -375,6 +375,11 @@ enum ZHopType {
     zhtCount
 };
 
+enum GantryTiltAxis {
+    gtaX = 0,
+    gtaY
+};
+
 enum RetractLiftEnforceType {
     rletAllSurfaces = 0,
     rletTopOnly,
@@ -1195,6 +1200,8 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloat, time_cost)) 
     ((ConfigOptionBool, machine_is_belt))
     ((ConfigOptionFloat, belt_Z_offset))
+    ((ConfigOptionFloat,               gantry_tilt_angle))
+    ((ConfigOptionEnum<GantryTiltAxis>, gantry_tilt_axis))
     ((ConfigOptionString,              layer_change_gcode))
     ((ConfigOptionString,              time_lapse_gcode))
 

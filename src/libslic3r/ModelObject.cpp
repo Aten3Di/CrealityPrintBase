@@ -654,12 +654,12 @@ BoundingBoxf3 ModelObject::instance_bounding_box(const ModelInstance &instance, 
 }
 
 
-BoundingBoxf3 ModelObject::instance_belt_bounding_box(size_t instance_idx, bool dont_translate) const
+BoundingBoxf3 ModelObject::instance_belt_bounding_box(size_t instance_idx, bool dont_translate, float tilt_angle_deg, GantryTiltAxis tilt_axis) const
 {
-    return instance_belt_bounding_box(*this->instances[instance_idx], dont_translate);
+    return instance_belt_bounding_box(*this->instances[instance_idx], dont_translate, tilt_angle_deg, tilt_axis);
 }
 
-Transform3d beltXForm(const Transform3d& offset, float angle)
+Transform3d beltXForm(const Transform3d& offset, float angle, GantryTiltAxis tilt_axis)
 {
     float theta = angle * PI / 180.0f;
 
@@ -671,9 +671,15 @@ Transform3d beltXForm(const Transform3d& offset, float angle)
 
     Transform3d xf2 = Transform3d::Identity();
     xf2(2, 2)       = 0.0f;
-    xf2(1, 1)       = 0.0f;
-    xf2(2, 1)       = -1.0f;
-    xf2(1, 2)       = 1.0f;
+    if (tilt_axis == GantryTiltAxis::gtaY) {
+        xf2(1, 1) = 0.0f;
+        xf2(2, 1) = -1.0f;
+        xf2(1, 2) = 1.0f;
+    } else {
+        xf2(0, 0) = 0.0f;
+        xf2(2, 0) = -1.0f;
+        xf2(0, 2) = 1.0f;
+    }
 
     Vec3d                    xf3Data(0.0f, 0.0f, 0.0f);
     Geometry::Transformation _trans;
@@ -684,14 +690,14 @@ Transform3d beltXForm(const Transform3d& offset, float angle)
     return xf;
 }
 
-BoundingBoxf3 ModelObject::instance_belt_bounding_box(const ModelInstance& instance, bool dont_translate) const
+BoundingBoxf3 ModelObject::instance_belt_bounding_box(const ModelInstance& instance, bool dont_translate, float tilt_angle_deg, GantryTiltAxis tilt_axis) const
 {
     BoundingBoxf3     bb;
     
     Transform3d inst_matrix = instance.get_transformation().get_matrix_no_offset();
     for (ModelVolume* v : this->volumes) {
         if (v->is_model_part())
-            bb.merge(v->mesh().transformed_bounding_box(inst_matrix * v->get_matrix(), beltXForm(Transform3d::Identity(),45.0f)));
+            bb.merge(v->mesh().transformed_bounding_box(inst_matrix * v->get_matrix(), beltXForm(Transform3d::Identity(), tilt_angle_deg, tilt_axis)));
     }
     return bb;
 }
@@ -1502,4 +1508,3 @@ bool ModelObject::has_solid_mesh() const
 
 
 };
-
