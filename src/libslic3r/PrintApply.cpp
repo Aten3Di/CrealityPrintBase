@@ -1815,7 +1815,9 @@ Print::ApplyStatus Print::apply(const Model &model, DynamicPrintConfig new_full_
         }
         print_object_status_db.clear();
 
-       if (new_full_config.option<ConfigOptionBool>("machine_is_belt")->getBool() == true) {
+       const bool belt_mode_enabled = new_full_config.option<ConfigOptionBool>("machine_is_belt")->getBool() == true &&
+                                      new_full_config.option<ConfigOptionFloat>("gantry_tilt_angle")->getFloat() > 0.0f;
+       if (belt_mode_enabled) {
             for (PrintObject* object : m_objects) {
                 object->set_belt(true);
             }

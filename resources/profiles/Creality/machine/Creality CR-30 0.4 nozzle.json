@@ -58,6 +58,8 @@
     "machine_pause_gcode": "PAUSE",
     "machine_platform_motion_enable": "1",
     "machine_ptc_exist": "0",
+    "gantry_tilt_angle": "45",
+    "gantry_tilt_axis": "Y",
     "machine_start_gcode": "M109 S[nozzle_temperature_initial_layer]\nG90               ; Set to Absolute Positioning\nM82               ; Set extruder to absolute mode\nG21               ; Metric values\nG28 X Y\nG92 Z0 E0   ; Set all axis to 0\n;home X\nG1 Y2             ; Move Y axis off the bed\nG28 X0 F2000      ; Home X axis\nG1 Z5 F4000  ; Move X to the center\n;probe Y\nM908 P5 S10       ; Setting the motor current of the Y1 motor off\nM908 P1 S10       ; Setting the motor current of the Y2 motor off\nG1 Y20 F3000      ; Move Y up\nM400              ; Wait for current moves to finish\nM908 P5 S25       ; Setting the motor current of the Y1 motor very low\nM908 P1 S25       ; Setting the motor current of the Y2 motor off\nG1 Y0 F500        ; Move Y down into the belt\nM400              ; Wait for current moves to finish\nM908 P5 S140      ; Setting the motor current of the Y1 motor to normal\nM908 P1 S140      ; Setting the motor current of the Y2 motor to normal \n;purge\nG1 Y2             ; Move Y axis off the bed\nG1 F500         ; Set high feedrate\nG1 Z.15\nG1 X160 Y.283 E10\nG1 Z.3\nG1 X10 Y.283 E20\nG92 E0",
     "machine_tool_change_time": "0",
     "machine_unload_filament_time": "0",

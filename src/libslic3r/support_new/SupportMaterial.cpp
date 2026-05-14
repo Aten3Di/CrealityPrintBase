@@ -425,10 +425,11 @@ void PrintObjectSupportMaterial::generate(PrintObject &object)
         object, top_contacts, buildplate_covered,
         layer_storage, layer_support_areas);
 
-    // for belt machine use "belt_layer_support_areas" replace "layer_support_areas"
-    if (object.belt()) {
-        layer_support_areas = belt_layer_support_areas;
-    }
+    // NOTE:
+    // For belt machines, replacing layer_support_areas with belt_layer_support_areas may
+    // sink interface regions into the support body for some sloped geometries.
+    // Keep the standard support area pipeline so interface contacts stay at the
+    // model/support boundary.
 
     if (object.print()->canceled())
         return;
@@ -2648,7 +2649,8 @@ SupportGeneratorLayersPtr PrintObjectSupportMaterial::bottom_contact_layers_and_
     //const auto   expansion_to_slice = m_support_material_flow.scaled_spacing() / 2 + 25;
     const SupportGridParams grid_params(*m_object_config, m_support_params.support_material_flow);
     const bool buildplate_only = ! buildplate_covered.empty();
-    const bool belt_machine = object.print()->config().machine_is_belt;
+    const bool belt_machine = object.print()->config().machine_is_belt &&
+                              object.print()->config().gantry_tilt_angle > 0.0;
 
     // Bed clipping polygon (0..width, 0..depth). Only used for belt printers.
     Polygons bed_clip;
